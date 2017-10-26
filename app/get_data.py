@@ -34,7 +34,6 @@ def collect():
    
   return jsonify({'msg': 'import successfull'})
 
-
 @app.route('/')
 def index():
  return jsonify({'msg': 'What a wonderfull world'})
@@ -48,7 +47,6 @@ def all():
     'image': i.image,
     } for i in Product.query.all()]
 
-
   # PEP 8 states that empy lists are false
   if not response:
     return jsonify({'msg': 'No data was found. Please populate first'}), 404
@@ -59,7 +57,7 @@ def all():
 def search():
   # unescaped since SQLAlchemy will escape it for us
   per_page       = request.args.get('per_page', '10')
-  q              = '%{q}%'.format(q = request.args.get('q', ''))  # enfore the LIKE sql behaviour
+  q              = '%{q}%'.format(q = request.args.get('q', ''))
   column         = request.args.get('c')
   page           = request.args.get('page', '1')
   sort           = request.args.get('sort', 'price')
@@ -67,46 +65,44 @@ def search():
 
   sort_allowed      = ['product_name', 'brand', 'price']
 
+  try:
+    int(page)
+  except ValueError:
+    return jsonify({'msg': 'page has to be int'}), 500
+
+  try:
+    int(per_page)
+  except ValueError:
+    return jsonify({'msg': 'per_page has to be int'}), 500
+
   if sort not in sort_allowed:
     return jsonify({'msg': 'The sort criteria was not allowed.'}), 400
 
   if direction not in ['asc', 'desc']:
     return jsonify({'msg': 'The sort direction was not allowed.'}), 400
-  
+
   # get the correct column to sort by and the sort direction
   sorted_column = getattr(getattr(Product, sort), direction)()
 
-  # calculating the correct offset - reducing page by 1 since we need to use it with 0 based index
-  offset            = (int(page) - 1) * int(per_page)
-
-  app.logger.debug("Ordering by %s %s" % (sort, direction))
-
   # limit searching to a specific column when correctly defined
-  columns_allowed = ['product_name', 'brand']
-  if column in columns_allowed:
-    response = [{
-      'name' : i.product_name,
-      'price': i.price,
-      'brand': i.brand,
-      'image': i.image,
-    } for i in  Product.query.filter(
-        getattr(Product, column).like(q)).order_by(sorted_column).offset(offset).limit(per_page)
-    ]
+  if column in ['product_name', 'brand']:
+    criteria = getattr(Product, column).like(q)
   
   # if no column was defined, do full text
   # since fts is not implemented yet, manually select all columns by using or_
   else:
-    response = [{
-      'name' : i.product_name,
-      'price': i.price,
-      'brand': i.brand,
-      'image': i.image,
-    } for i in Product.query.filter(or_(
-        Product.brand.like(q),
-        Product.product_name.like(q)
-        )
-      ).order_by(sorted_column).offset(offset).limit(per_page)
-    ]
+    criteria = or_(Product.brand.like(q), Product.product_name.like(q))
+  
+  app.logger.debug("Ordering by %s %s" % (sort, direction))
+
+  response = [{
+    'name' : i.product_name,
+    'price': i.price,
+    'brand': i.brand,
+    'image': i.image,
+  } for i in Product.query.filter(criteria) \
+    .order_by(sorted_column).paginate(int(page), int(per_page), False).items
+  ]
 
   if not response:
     return jsonify({'msg': 'No articles were found'}), 404

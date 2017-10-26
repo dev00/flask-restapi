@@ -1,4 +1,4 @@
-flask
-requests
-flask-sqlalchemy
-sqlalchemy-migrate
+Flask==0.12.2
+Flask-SQLAlchemy==2.3.2
+SQLAlchemy==1.1.14
+sqlalchemy-migrate==0.11.0
