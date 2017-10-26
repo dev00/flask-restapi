@@ -14,6 +14,5 @@ class Product(db.Model):
     brand = db.Column(db.String(20))
     image = db.Column(db.String(200))
 
-
     def __repr__(self):
         return "<Product %s>, <Brand> %s, %s" % (self.product_name, self.brand, self.price)

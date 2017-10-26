@@ -1,5 +1,5 @@
 from app import app, db
-from flask import Flask, jsonify, request
+from flask import jsonify, request
 from sqlalchemy import asc, desc, or_
 import requests
 from .models import Product
