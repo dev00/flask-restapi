@@ -51,7 +51,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             first_product = Product.query.order_by(Product.price.asc()).first()
             last_product = Product.query.order_by(Product.price.desc()).first()
-         assert first_product.price < last_product.price
+        assert first_product.price < last_product.price
 
     def test_parametrized_sort(self):
         with app.test_client() as c:
