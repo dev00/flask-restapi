@@ -9,7 +9,7 @@ def collect():
   url = "https://api.zalando.com/articles/"
 
   # Temp solution to ensure DB gets filled with 600 entries
-  parameters = {'fullText': 'shoes', 'category': 'womens-shoes', 'pageSize': '200'}
+  parameters = {'pageSize': '200'}
   for i in range(1,4):
     try:
       parameters['page'] = i
@@ -47,6 +47,12 @@ def all():
     'brand': i.brand,
     'image': i.image,
     } for i in Product.query.all()]
+
+
+  # PEP 8 states that empy lists are false
+  if not response:
+    return jsonify({'msg': 'No data was found. Please populate first'}), 404
+
   return jsonify(response)
 
 @app.route('/search')
@@ -56,7 +62,7 @@ def search():
   q              = '%{q}%'.format(q = request.args.get('q', ''))  # enfore the LIKE sql behaviour
   column         = request.args.get('c')
   page           = request.args.get('page', '1')
-  sort           = request.args.get('sort')
+  sort           = request.args.get('sort', 'price')
   direction      = request.args.get('direction', 'asc')
 
   sort_allowed      = ['product_name', 'brand', 'price']
@@ -68,8 +74,7 @@ def search():
     return jsonify({'msg': 'The sort direction was not allowed.'}), 400
   
   # get the correct column to sort by and the sort direction
-  sort_column = getattr(Product, sort)
-  sorted_column = getattr(sort_column, direction)()
+  sorted_column = getattr(getattr(Product, sort), direction)()
 
   # calculating the correct offset - reducing page by 1 since we need to use it with 0 based index
   offset            = (int(page) - 1) * int(per_page)
@@ -85,7 +90,6 @@ def search():
       'brand': i.brand,
       'image': i.image,
     } for i in  Product.query.filter(
-        #getattr(Product, column).like(q)).order_by(getattr(Product, sort)).offset(offset).limit(per_page)
         getattr(Product, column).like(q)).order_by(sorted_column).offset(offset).limit(per_page)
     ]
   
@@ -103,5 +107,8 @@ def search():
         )
       ).order_by(sorted_column).offset(offset).limit(per_page)
     ]
+
+  if not response:
+    return jsonify({'msg': 'No articles were found'}), 404
 
   return jsonify(response)
