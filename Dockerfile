@@ -1,5 +1,5 @@
 FROM python:3.5.4-alpine
-MAINTAINER Niko Schmuck <niko@nava.de> 
+MAINTAINER Michael Rose <michaelrose.1992@gmail.com> 
 
 RUN mkdir -p /opt/webapp
 WORKDIR /opt/webapp
