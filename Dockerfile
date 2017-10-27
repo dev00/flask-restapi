@@ -6,8 +6,7 @@ WORKDIR /opt/webapp
 
 COPY app /opt/webapp/app
 COPY requirements.txt run.py config.py /opt/webapp/
-RUN pip3 install --no-cache-dir -r requirements.txt
-RUN pip3 install --upgrade requests
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the Flask port
 EXPOSE 5000
